@@ -20,7 +20,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.precios = {'capuchino': 2.50, 'expreso': 1.80, 'frappe': 3.00, 'chocolate': 2.00}
 
         # Oculta elementos al inicio
-        self.listWidget_menu.setVisible(False)
         self.BuyButton.setVisible(False)
         self.listWidget_carrito.setVisible(False)
         self.labelmenumsg.setVisible(False)
@@ -76,7 +75,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def iniciar_sesion(self):
         if self.user == self.txt_user.toPlainText() and self.password == self.txt_pass.toPlainText():
             # Muestra elementos después del inicio de sesión exitoso
-            self.listWidget_menu.setVisible(True)
             self.BuyButton.setVisible(True)
             self.listWidget_carrito.setVisible(True)
             self.labelmenumsg.setVisible(True)

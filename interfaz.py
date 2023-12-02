@@ -75,7 +75,7 @@ class Ui_MainWindow(object):
         self.capimg = QtWidgets.QLabel(parent=self.centralwidget)
         self.capimg.setGeometry(QtCore.QRect(20, 10, 171, 161))
         self.capimg.setText("")
-        self.capimg.setPixmap(QtGui.QPixmap("../cafesfotos/2022-02_cappuccino_1.png"))
+        self.capimg.setPixmap(QtGui.QPixmap("2022-02_cappuccino_1.png"))
         self.capimg.setScaledContents(True)
         self.capimg.setObjectName("capimg")
         self.capmenos = QtWidgets.QPushButton(parent=self.centralwidget)
@@ -90,7 +90,7 @@ class Ui_MainWindow(object):
         self.expresoimg = QtWidgets.QLabel(parent=self.centralwidget)
         self.expresoimg.setGeometry(QtCore.QRect(270, 10, 171, 161))
         self.expresoimg.setText("")
-        self.expresoimg.setPixmap(QtGui.QPixmap("../cafesfotos/2022-02_espresso-americano_1.png"))
+        self.expresoimg.setPixmap(QtGui.QPixmap("2022-02_espresso-americano_1.png"))
         self.expresoimg.setScaledContents(True)
         self.expresoimg.setObjectName("expresoimg")
         self.exmenos = QtWidgets.QPushButton(parent=self.centralwidget)
@@ -102,7 +102,7 @@ class Ui_MainWindow(object):
         self.frapimg = QtWidgets.QLabel(parent=self.centralwidget)
         self.frapimg.setGeometry(QtCore.QRect(20, 240, 171, 161))
         self.frapimg.setText("")
-        self.frapimg.setPixmap(QtGui.QPixmap("../cafesfotos/2022-02_caramel-frappuccino_2.png"))
+        self.frapimg.setPixmap(QtGui.QPixmap("2022-02_caramel-frappuccino_2.png"))
         self.frapimg.setScaledContents(True)
         self.frapimg.setObjectName("frapimg")
         self.frapmenos = QtWidgets.QPushButton(parent=self.centralwidget)
@@ -114,7 +114,7 @@ class Ui_MainWindow(object):
         self.chocimg = QtWidgets.QLabel(parent=self.centralwidget)
         self.chocimg.setGeometry(QtCore.QRect(270, 240, 171, 161))
         self.chocimg.setText("")
-        self.chocimg.setPixmap(QtGui.QPixmap("../cafesfotos/2022-02_chocolate-caliente_1.png"))
+        self.chocimg.setPixmap(QtGui.QPixmap("2022-02_chocolate-caliente_1.png"))
         self.chocimg.setScaledContents(True)
         self.chocimg.setObjectName("chocimg")
         self.chocmenos = QtWidgets.QPushButton(parent=self.centralwidget)
@@ -126,6 +126,23 @@ class Ui_MainWindow(object):
         self.listWidget_carrito = QtWidgets.QListWidget(parent=self.centralwidget)
         self.listWidget_carrito.setGeometry(QtCore.QRect(470, 40, 471, 591))
         self.listWidget_carrito.setObjectName("listWidget_carrito")
+        self.BuyButton = QtWidgets.QPushButton(parent=self.centralwidget)
+        self.BuyButton.setGeometry(QtCore.QRect(494, 477, 431, 131))
+        self.BuyButton.setStyleSheet("QPushButton{\n"
+"background-color: rgb(76, 79, 255);\n"
+"color: rgb(19, 19, 19);\n"
+"border-radius:12px;\n"
+"}\n"
+"QPushButton:hover{\n"
+"background-color: rgb(44, 44, 255);\n"
+"}\n"
+"QPushButton:pressed{\n"
+"background-color: rgb(89, 255, 167);\n"
+"}")
+        self.BuyButton.setObjectName("BuyButton")
+        self.listWidget_menu = QtWidgets.QListWidget(parent=self.centralwidget)
+        self.listWidget_menu.setGeometry(QtCore.QRect(35, 241, 401, 371))
+        self.listWidget_menu.setObjectName("listWidget_menu")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 952, 35))
@@ -153,6 +170,7 @@ class Ui_MainWindow(object):
         self.chocomas.setText(_translate("MainWindow", "+"))
         self.chocmenos.setText(_translate("MainWindow", "-"))
         self.labelmenumsg.setText(_translate("MainWindow", "Menu de compras"))
+        self.BuyButton.setText(_translate("MainWindow", "Comprar"))
 
 
 if __name__ == "__main__":
