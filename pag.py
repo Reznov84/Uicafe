@@ -35,10 +35,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.buttonlogin.setVisible(True)
 
         # Diccionario para rastrear la cantidad y el precio total de cada bebida en el carrito
-        self.carrito = {'capuchino': {'cantidad': 0, 'precio_total': 0.0},
-                        'expreso': {'cantidad': 0, 'precio_total': 0.0},
-                        'frappe': {'cantidad': 0, 'precio_total': 0.0},
-                        'chocolate': {'cantidad': 0, 'precio_total': 0.0}}
+        self.carrito = {}
 
         # Conecta el botón "BuyButton" para agregar la compra al carrito y guardar en CSV
         self.BuyButton.clicked.connect(self.agregar_al_carrito)
@@ -47,6 +44,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.listWidget_menu.itemClicked.connect(self.agregar_bebida_al_carrito)
 
     def cargar_menu_desde_csv(self, archivo_csv):
+        # Limpiar el menú antes de cargarlo nuevamente
+        self.listWidget_menu.clear()
+        self.precios.clear()
+
         try:
             with open(archivo_csv, newline='') as file:
                 reader = csv.DictReader(file)
@@ -82,17 +83,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Asegúrate de que la bebida esté en el carrito antes de intentar actualizar la cantidad
         if bebida in self.carrito:
             self.carrito[bebida]['cantidad'] += cantidad
-            cantidad_actual = self.carrito[bebida]['cantidad']
+        else:
+            # Si la bebida no está en el carrito, agrégala
+            self.carrito[bebida] = {'cantidad': cantidad}
 
-            # Si la cantidad es 0, elimina el elemento del carrito y deshabilita el botón "-"
-            if cantidad_actual == 0:
-                self.eliminar_item_carrito(bebida)
-            else:
-                # Actualiza la lista del carrito
-                self.actualizar_lista_carrito(bebida, cantidad_actual)
+        cantidad_actual = self.carrito[bebida]['cantidad']
 
-            # Calcula y muestra el total de la compra
-            self.actualizar_total_compra()
+        # Si la cantidad es 0, elimina el elemento del carrito y deshabilita el botón "-"
+        if cantidad_actual == 0:
+            self.eliminar_item_carrito(bebida)
+        else:
+            # Actualiza la lista del carrito
+            self.actualizar_lista_carrito(bebida, cantidad_actual)
+
+        # Calcula y muestra el total de la compra
+        self.actualizar_total_compra()
 
     def actualizar_lista_carrito(self, bebida, cantidad_actual):
         # Busca si la bebida ya está en el carrito
@@ -115,6 +120,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def eliminar_item_carrito(self, bebida):
         # Elimina la bebida del carrito y actualiza el diccionario
+        del self.carrito[bebida]
         self.listWidget_carrito.clear()
         for key, value in self.carrito.items():
             if value['cantidad'] > 0:
@@ -133,7 +139,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # Escribe una fila con la información de la compra
             for bebida, item in self.carrito.items():
                 cantidad = item['cantidad']
-                precio_unitario = self.precios[bebida]
+                precio_unitario = self.precios.get(bebida, 0.0)
                 precio_total = cantidad * precio_unitario
 
                 # Si la cantidad es mayor que 0, guarda la compra en el archivo
@@ -143,6 +149,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def agregar_al_carrito(self):
         # Agrega la compra al carrito y guarda en CSV
         self.guardar_en_csv()
+
+        # Limpia el carrito y actualiza la interfaz
+        self.listWidget_carrito.clear()
+        self.actualizar_total_compra()
 
     def agregar_bebida_al_carrito(self, item):
         # Obtiene el texto del elemento seleccionado en listWidget_menu
