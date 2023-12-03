@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QTextEdit, QListWidget, QListWidgetItem, QPushButton
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QTextEdit, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt
 from interfaz import Ui_MainWindow
 import csv
@@ -34,47 +34,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.txt_pass.setVisible(True)
         self.buttonlogin.setVisible(True)
 
-        # capuchino
-        self.capimg.setVisible(False)
-        self.capmenos.setVisible(False)
-        self.capmas.setVisible(False)
-
-        # expreso
-        self.expresoimg.setVisible(False)
-        self.exmas.setVisible(False)
-        self.exmenos.setVisible(False)
-
-        # frappe
-        self.frapimg.setVisible(False)
-        self.frapmas.setVisible(False)
-        self.frapmenos.setVisible(False)
-
-        # chocolate
-        self.chocimg.setVisible(False)
-        self.chocomas.setVisible(False)
-        self.chocmenos.setVisible(False)
-
         # Diccionario para rastrear la cantidad y el precio total de cada bebida en el carrito
         self.carrito = {'capuchino': {'cantidad': 0, 'precio_total': 0.0},
                         'expreso': {'cantidad': 0, 'precio_total': 0.0},
                         'frappe': {'cantidad': 0, 'precio_total': 0.0},
                         'chocolate': {'cantidad': 0, 'precio_total': 0.0}}
 
-        # Conecta los botones de +/- a sus respectivas funciones
-        self.capmas.clicked.connect(lambda: self.actualizar_carrito('capuchino', 1))
-        self.capmenos.clicked.connect(lambda: self.actualizar_carrito('capuchino', -1))
-        self.exmas.clicked.connect(lambda: self.actualizar_carrito('expreso', 1))
-        self.exmenos.clicked.connect(lambda: self.actualizar_carrito('expreso', -1))
-        self.frapmas.clicked.connect(lambda: self.actualizar_carrito('frappe', 1))
-        self.frapmenos.clicked.connect(lambda: self.actualizar_carrito('frappe', -1))
-        self.chocomas.clicked.connect(lambda: self.actualizar_carrito('chocolate', 1))
-        self.chocmenos.clicked.connect(lambda: self.actualizar_carrito('chocolate', -1))
-
-        # Deshabilita el botón "-" para cada bebida si la cantidad es 0
-        self.actualizar_estado_botones()
-
         # Conecta el botón "BuyButton" para agregar la compra al carrito y guardar en CSV
         self.BuyButton.clicked.connect(self.agregar_al_carrito)
+
+        # Conecta la señal itemClicked del listWidget_menu a la función agregar_bebida_al_carrito
+        self.listWidget_menu.itemClicked.connect(self.agregar_bebida_al_carrito)
 
     def cargar_menu_desde_csv(self, archivo_csv):
         try:
@@ -105,78 +75,50 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.txt_pass.setVisible(False)
             self.buttonlogin.setVisible(False)
             self.lbl_message.setVisible(False)
-
-            # capuchino
-            self.capmenos.setVisible(True)
-            self.capmas.setVisible(True)
-            self.capimg.setVisible(True)
-
-            # expreso
-            self.expresoimg.setVisible(True)
-            self.exmas.setVisible(True)
-            self.exmenos.setVisible(True)
-
-            # frappe
-            self.frapimg.setVisible(True)
-            self.frapmas.setVisible(True)
-            self.frapmenos.setVisible(True)
-
-            # chocolate
-            self.chocimg.setVisible(True)
-            self.chocomas.setVisible(True)
-            self.chocmenos.setVisible(True)
-
         else:
             self.lbl_message.setText("Denegado")
 
     def actualizar_carrito(self, bebida, cantidad):
-        # Actualiza la cantidad de la bebida en el carrito
-        self.carrito[bebida]['cantidad'] += cantidad
-        cantidad_actual = self.carrito[bebida]['cantidad']
+        # Asegúrate de que la bebida esté en el carrito antes de intentar actualizar la cantidad
+        if bebida in self.carrito:
+            self.carrito[bebida]['cantidad'] += cantidad
+            cantidad_actual = self.carrito[bebida]['cantidad']
 
-        # Si la cantidad es 0, elimina el elemento del carrito y deshabilita el botón "-"
-        if cantidad_actual == 0:
-            self.eliminar_item_carrito(bebida)
-        else:
-            # Actualiza la lista del carrito
-            self.actualizar_lista_carrito(bebida, cantidad_actual)
+            # Si la cantidad es 0, elimina el elemento del carrito y deshabilita el botón "-"
+            if cantidad_actual == 0:
+                self.eliminar_item_carrito(bebida)
+            else:
+                # Actualiza la lista del carrito
+                self.actualizar_lista_carrito(bebida, cantidad_actual)
 
-        # Calcula y muestra el total de la compra
-        self.actualizar_total_compra()
-
-        # Actualiza el estado de los botones
-        self.actualizar_estado_botones()
+            # Calcula y muestra el total de la compra
+            self.actualizar_total_compra()
 
     def actualizar_lista_carrito(self, bebida, cantidad_actual):
         # Busca si la bebida ya está en el carrito
         for index in range(self.listWidget_carrito.count()):
             item = self.listWidget_carrito.item(index)
-            if item.text().startswith(bebida):
+            widget = self.listWidget_carrito.itemWidget(item)
+            if widget and widget.bebida == bebida:
                 # Actualiza la cantidad en el carrito
-                item.setText(
-                    f"{bebida} ({cantidad_actual} x ${self.precios[bebida]:.2f} = ${cantidad_actual * self.precios[bebida]:.2f})")
+                widget.label.setText(
+                    f"{bebida} - Cantidad: {cantidad_actual} - Precio Unitario: ${self.precios[bebida]:.2f} - Total: ${cantidad_actual * self.precios[bebida]:.2f}")
                 return
 
         # Si la bebida no está en el carrito, agrega un nuevo elemento
-        item = QListWidgetItem(
-            f"{bebida} ({cantidad_actual} x ${self.precios[bebida]:.2f} = ${cantidad_actual * self.precios[bebida]:.2f})")
+        widget = BeverageWidget(bebida, cantidad_actual, self.precios[bebida])
+        widget.quitar_button.clicked.connect(lambda _, b=bebida: self.quitar_del_carrito(b))
+        item = QListWidgetItem()
+        item.setSizeHint(widget.sizeHint())
         self.listWidget_carrito.addItem(item)
+        self.listWidget_carrito.setItemWidget(item, widget)
 
     def eliminar_item_carrito(self, bebida):
         # Elimina la bebida del carrito y actualiza el diccionario
         self.listWidget_carrito.clear()
         for key, value in self.carrito.items():
             if value['cantidad'] > 0:
-                item = QListWidgetItem(
-                    f"{key} ({value['cantidad']} x ${self.precios[key]:.2f} = ${value['cantidad'] * self.precios[key]:.2f})")
-                self.listWidget_carrito.addItem(item)
-
-    def actualizar_estado_botones(self):
-        # Deshabilita el botón "-" si la cantidad es 0
-        self.capmenos.setEnabled(self.carrito['capuchino']['cantidad'] > 0)
-        self.exmenos.setEnabled(self.carrito['expreso']['cantidad'] > 0)
-        self.frapmenos.setEnabled(self.carrito['frappe']['cantidad'] > 0)
-        self.chocmenos.setEnabled(self.carrito['chocolate']['cantidad'] > 0)
+                self.actualizar_lista_carrito(key, value['cantidad'])
 
     def actualizar_total_compra(self):
         # Calcula y muestra el total de la compra
@@ -201,6 +143,37 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def agregar_al_carrito(self):
         # Agrega la compra al carrito y guarda en CSV
         self.guardar_en_csv()
+
+    def agregar_bebida_al_carrito(self, item):
+        # Obtiene el texto del elemento seleccionado en listWidget_menu
+        bebida_texto = item.text()
+
+        # Extrae el nombre de la bebida del texto
+        bebida = bebida_texto.split(":")[0].strip().lower()
+
+        # Añade la bebida al carrito con una cantidad de 1
+        self.actualizar_carrito(bebida, 1)
+
+    def quitar_del_carrito(self, bebida):
+        # Disminuye la cantidad en el carrito y actualiza la lista del carrito
+        self.actualizar_carrito(bebida, -1)
+
+class BeverageWidget(QWidget):
+    def __init__(self, bebida, cantidad, precio_unitario, *args, **kwargs):
+        super(BeverageWidget, self).__init__(*args, **kwargs)
+
+        layout = QVBoxLayout()
+
+        self.label = QLabel(
+            f"{bebida} - Cantidad: {cantidad} - Precio Unitario: ${precio_unitario:.2f} - Total: ${cantidad * precio_unitario:.2f}")
+        self.quitar_button = QPushButton("Quitar")
+
+        layout.addWidget(self.label)
+        layout.addWidget(self.quitar_button)
+
+        self.bebida = bebida
+
+        self.setLayout(layout)
 
 if __name__ == '__main__':
     app = QApplication([])
