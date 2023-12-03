@@ -75,7 +75,7 @@ class Ui_MainWindow(object):
         self.lbl_message.setText("")
         self.lbl_message.setObjectName("lbl_message")
         self.labelmenumsg = QtWidgets.QLabel(self.centralwidget)
-        self.labelmenumsg.setGeometry(QtCore.QRect(420, 0, 331, 41))
+        self.labelmenumsg.setGeometry(QtCore.QRect(370, 0, 721, 41))
         self.labelmenumsg.setObjectName("labelmenumsg")
         self.listWidget_carrito = QtWidgets.QListWidget(self.centralwidget)
         self.listWidget_carrito.setGeometry(QtCore.QRect(470, 40, 631, 591))

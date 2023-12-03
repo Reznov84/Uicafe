@@ -145,8 +145,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 # Si la cantidad es mayor que 0, guarda la compra en el archivo
                 if cantidad > 0:
                     writer.writerow([bebida, cantidad, precio_unitario, precio_total])
-
     def agregar_al_carrito(self):
+        # Verificar inventario antes de agregar la compra al carrito
+        if not self.verificar_inventario():
+            # Mostrar mensaje de error al usuario
+            print("No hay suficiente inventario para realizar la compra.")
+            return
+
         # Agrega la compra al carrito y guarda en CSV
         self.guardar_en_csv()
 
@@ -177,12 +182,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             cantidad = item['cantidad']
             requisitos = self.obtener_requisitos(bebida)
 
-            # Comprueba si hay suficiente inventario para cada ingrediente
+        # Comprueba si hay suficiente inventario para cada ingrediente
             for ingrediente, cantidad_requerida in requisitos.items():
                 if self.obtener_cantidad_inventario(ingrediente) < cantidad * cantidad_requerida:
+                # No hay suficiente inventario, actualiza el mensaje en labelmenumsg
+                    self.labelmenumsg.setText(f"No hay suficiente inventario para {bebida}.")
                     return False  # No hay suficiente inventario
 
-        return True  # Hay suficiente inventario para todas las bebidas en el carrito
+    # Hay suficiente inventario para todas las bebidas en el carrito
+        self.labelmenumsg.setText("Inventario verificado: Suficiente inventario.")
+        return True
+
 
     def obtener_requisitos(self, bebida):
         # Obtiene los requisitos de ingredientes para una bebida específica
