@@ -2,6 +2,13 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QTextEdit, QListW
 from PyQt5.QtCore import Qt
 from interfaz import Ui_MainWindow
 import csv
+from twilio.rest import Client
+from twilio.rest.api.v2010.account.message import MessageInstance as Message  # Importa la clase Message
+
+account_sid = 'ACf11a2cbae1c24695c1bcfcec6c4a2ccd'
+auth_token = 'ad3232328ad7b826a90afa1ca5ae2ade'
+client = Client(account_sid, auth_token)
+
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, *args, **kwargs):
@@ -16,13 +23,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.listWidget_menu = self.findChild(QListWidget, "listWidget_menu")
         self.listWidget_carrito = self.findChild(QListWidget, "listWidget_carrito")
 
-        # Precios de las bebidas
+        #precio de las bebidas
         self.precios = {}
 
-        # Cargar el menú desde un archivo CSV
+        #cargar menu desde csv
         self.cargar_menu_desde_csv('menu.csv')
 
-        # Oculta elementos al inicio
+        #ocultar elementos antes de iniciar sesion
         self.listWidget_menu.setVisible(False)
         self.BuyButton.setVisible(False)
         self.listWidget_carrito.setVisible(False)
@@ -34,17 +41,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.txt_pass.setVisible(True)
         self.buttonlogin.setVisible(True)
 
-        # Diccionario para rastrear la cantidad y el precio total de cada bebida en el carrito
+        #rastrear la cantidad y el precio total de cada bebida en el carrito
         self.carrito = {}
 
-        # Conecta el botón "BuyButton" para agregar la compra al carrito y guardar en CSV
+        #conecta el boton "BuyButton" para agregar la compra al carrito y guardar en CSV
         self.BuyButton.clicked.connect(self.agregar_al_carrito)
 
-        # Conecta la señal itemClicked del listWidget_menu a la función agregar_bebida_al_carrito
+        #conecta la señal itemClicked del listWidget_menu a la funcion agregar_bebida_al_carrito
         self.listWidget_menu.itemClicked.connect(self.agregar_bebida_al_carrito)
 
     def cargar_menu_desde_csv(self, archivo_csv):
-        # Limpiar el menú antes de cargarlo nuevamente
+        #limpiar el menu 
         self.listWidget_menu.clear()
         self.precios.clear()
 
@@ -64,7 +71,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def iniciar_sesion(self):
         if self.user == self.txt_user.toPlainText() and self.password == self.txt_pass.toPlainText():
-            # Muestra elementos después del inicio de sesión exitoso
+            #muestra los elementos al iniciar sesion
             self.listWidget_menu.setVisible(True)
             self.BuyButton.setVisible(True)
             self.listWidget_carrito.setVisible(True)
@@ -80,37 +87,37 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.lbl_message.setText("Denegado")
 
     def actualizar_carrito(self, bebida, cantidad):
-        # Asegúrate de que la bebida esté en el carrito antes de intentar actualizar la cantidad
+        #aumentar cantidad de bebida
         if bebida in self.carrito:
             self.carrito[bebida]['cantidad'] += cantidad
         else:
-            # Si la bebida no está en el carrito, agrégala
+            #añadir bebida por primera vez
             self.carrito[bebida] = {'cantidad': cantidad}
 
         cantidad_actual = self.carrito[bebida]['cantidad']
 
-        # Si la cantidad es 0, elimina el elemento del carrito y deshabilita el botón "-"
+        #si no hay bebida, desabilitar restar
         if cantidad_actual == 0:
             self.eliminar_item_carrito(bebida)
         else:
-            # Actualiza la lista del carrito
+            #actualiza la lista del carrito
             self.actualizar_lista_carrito(bebida, cantidad_actual)
 
-        # Calcula y muestra el total de la compra
+        #mostrar total
         self.actualizar_total_compra()
 
     def actualizar_lista_carrito(self, bebida, cantidad_actual):
-        # Busca si la bebida ya está en el carrito
+        #busca si la bebida ya esta en el carrito
         for index in range(self.listWidget_carrito.count()):
             item = self.listWidget_carrito.item(index)
             widget = self.listWidget_carrito.itemWidget(item)
             if widget and widget.bebida == bebida:
-                # Actualiza la cantidad en el carrito
+                #actualiza la cantidad en el carrito
                 widget.label.setText(
                     f"{bebida} - Cantidad: {cantidad_actual} - Precio Unitario: ${self.precios[bebida]:.2f} - Total: ${cantidad_actual * self.precios[bebida]:.2f}")
                 return
 
-        # Si la bebida no está en el carrito, agrega un nuevo elemento
+        #si la bebida no esta en el carrito, agrega un nuevo elemento
         widget = BeverageWidget(bebida, cantidad_actual, self.precios[bebida])
         widget.quitar_button.clicked.connect(lambda _, b=bebida: self.quitar_del_carrito(b))
         item = QListWidgetItem()
@@ -119,7 +126,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.listWidget_carrito.setItemWidget(item, widget)
 
     def eliminar_item_carrito(self, bebida):
-        # Elimina la bebida del carrito y actualiza el diccionario
+        #elimina la bebida del carrito y actualiza el diccionario
         del self.carrito[bebida]
         self.listWidget_carrito.clear()
         for key, value in self.carrito.items():
@@ -127,75 +134,94 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.actualizar_lista_carrito(key, value['cantidad'])
 
     def actualizar_total_compra(self):
-        # Calcula y muestra el total de la compra
+        #mostrar total 
         total = sum(item['cantidad'] * self.precios[bebida] for bebida, item in self.carrito.items())
         self.labelmenumsg.setText(f"Total de la compra: ${total:.2f}")
 
     def guardar_en_csv(self):
-        # Abre el archivo CSV en modo de escritura
+        #abrir archivo csv
         with open('ventas.csv', mode='a', newline='') as file:
             writer = csv.writer(file)
 
-            # Escribe una fila con la información de la compra
+            #escribir las compras
             for bebida, item in self.carrito.items():
                 cantidad = item['cantidad']
                 precio_unitario = self.precios.get(bebida, 0.0)
                 precio_total = cantidad * precio_unitario
 
-                # Si la cantidad es mayor que 0, guarda la compra en el archivo
+                #verificar que se haya hecho una compra
                 if cantidad > 0:
                     writer.writerow([bebida, cantidad, precio_unitario, precio_total])
+
+
+    def enviar_mensaje_twilio(self, cuerpo_mensaje):
+        try:
+            mensaje = client.messages.create(
+                body=cuerpo_mensaje,
+                from_='+12675206550',  
+                to='+522225635184'
+            )
+
+            print(f'Mensaje de confirmación enviado con SID: {mensaje.sid}')
+
+        except Exception as e:
+            print(f'Error al enviar el mensaje: {e}')
+
+
     def agregar_al_carrito(self):
-        # Verificar inventario antes de agregar la compra al carrito
+        #verifica inventario
         if not self.verificar_inventario():
-            # Mostrar mensaje de error al usuario
+            #mensaje de error de inventario
             print("No hay suficiente inventario para realizar la compra.")
             return
 
-        # Agrega la compra al carrito y guarda en CSV
+        #guardar en csv
         self.guardar_en_csv()
 
-        # Limpia el carrito y actualiza la interfaz
+        #limpia el carrito despues de la compra
         self.listWidget_carrito.clear()
         self.actualizar_total_compra()
 
-        # Actualiza el inventario después de la compra
+        #actualiza inventario
         self.actualizar_inventario()
 
+        #mensaje de texto
+        cuerpo_mensaje = f"Compra realizada. Total: ${self.labelmenumsg.text().split(': $')[1]}"
+        self.enviar_mensaje_twilio(cuerpo_mensaje)
+
     def agregar_bebida_al_carrito(self, item):
-        # Obtiene el texto del elemento seleccionado en listWidget_menu
+        #texto para el carrito
         bebida_texto = item.text()
 
-        # Extrae el nombre de la bebida del texto
+        #nombre de la bebida
         bebida = bebida_texto.split(":")[0].strip().lower()
 
-        # Añade la bebida al carrito con una cantidad de 1
+        #bebida y cantidad de 1
         self.actualizar_carrito(bebida, 1)
 
     def quitar_del_carrito(self, bebida):
-        # Disminuye la cantidad en el carrito y actualiza la lista del carrito
+        #disminuir cantidaden 1
         self.actualizar_carrito(bebida, -1)
 
     def verificar_inventario(self):
-        # Verifica si hay suficiente inventario para las bebidas en el carrito
+        #verifica la cantidad en el inventario
         for bebida, item in self.carrito.items():
             cantidad = item['cantidad']
             requisitos = self.obtener_requisitos(bebida)
 
-        # Comprueba si hay suficiente inventario para cada ingrediente
+            #comprueba por ingradiente
             for ingrediente, cantidad_requerida in requisitos.items():
                 if self.obtener_cantidad_inventario(ingrediente) < cantidad * cantidad_requerida:
-                # No hay suficiente inventario, actualiza el mensaje en labelmenumsg
+                    #mensaje de error en el labelmenumsg
                     self.labelmenumsg.setText(f"No hay suficiente inventario para {bebida}.")
-                    return False  # No hay suficiente inventario
+                    return False  
 
-    # Hay suficiente inventario para todas las bebidas en el carrito
+        #hay suficiente insumo
         self.labelmenumsg.setText("Inventario verificado: Suficiente inventario.")
         return True
 
-
     def obtener_requisitos(self, bebida):
-        # Obtiene los requisitos de ingredientes para una bebida específica
+        #leer los requisitos de la bebida
         try:
             with open('menu.csv', newline='') as file:
                 reader = csv.DictReader(file)
@@ -211,7 +237,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return {}
 
     def obtener_cantidad_inventario(self, ingrediente):
-        # Obtiene la cantidad actual en inventario para un ingrediente específico
+        #obtiene la cantidad actual en inventario para un ingrediente especifico
         try:
             with open('inventario.csv', newline='') as file:
                 reader = csv.DictReader(file)
@@ -226,19 +252,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return 0
 
     def actualizar_inventario(self):
-        # Actualiza el inventario después de una compra
+        #actualiza despues de la compra
         for bebida, item in self.carrito.items():
             cantidad = item['cantidad']
             requisitos = self.obtener_requisitos(bebida)
 
-            # Resta la cantidad utilizada de cada ingrediente en el inventario
+            #resta del inventario
             for ingrediente, cantidad_requerida in requisitos.items():
                 cantidad_actual = self.obtener_cantidad_inventario(ingrediente)
                 nueva_cantidad = cantidad_actual - cantidad * cantidad_requerida
                 self.actualizar_cantidad_inventario(ingrediente, nueva_cantidad)
 
     def actualizar_cantidad_inventario(self, ingrediente, nueva_cantidad):
-        # Actualiza la cantidad en inventario para un ingrediente específico
         try:
             with open('inventario.csv', 'r', newline='') as file:
                 lines = file.readlines()
@@ -247,7 +272,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 writer = csv.writer(file)
                 writer.writerow(['Ingrediente', 'Cantidad'])
 
-                for line in lines[1:]:  # Omitir la primera línea (encabezado)
+                for line in lines[1:]:  
                     row = line.strip().split(',')
                     if row[0].lower() == ingrediente.lower():
                         writer.writerow([ingrediente, nueva_cantidad])
