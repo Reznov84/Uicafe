@@ -154,6 +154,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.listWidget_carrito.clear()
         self.actualizar_total_compra()
 
+        # Actualiza el inventario después de la compra
+        self.actualizar_inventario()
+
     def agregar_bebida_al_carrito(self, item):
         # Obtiene el texto del elemento seleccionado en listWidget_menu
         bebida_texto = item.text()
@@ -167,6 +170,83 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def quitar_del_carrito(self, bebida):
         # Disminuye la cantidad en el carrito y actualiza la lista del carrito
         self.actualizar_carrito(bebida, -1)
+
+    def verificar_inventario(self):
+        # Verifica si hay suficiente inventario para las bebidas en el carrito
+        for bebida, item in self.carrito.items():
+            cantidad = item['cantidad']
+            requisitos = self.obtener_requisitos(bebida)
+
+            # Comprueba si hay suficiente inventario para cada ingrediente
+            for ingrediente, cantidad_requerida in requisitos.items():
+                if self.obtener_cantidad_inventario(ingrediente) < cantidad * cantidad_requerida:
+                    return False  # No hay suficiente inventario
+
+        return True  # Hay suficiente inventario para todas las bebidas en el carrito
+
+    def obtener_requisitos(self, bebida):
+        # Obtiene los requisitos de ingredientes para una bebida específica
+        try:
+            with open('menu.csv', newline='') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if row['Bebida'].lower() == bebida:
+                        return {ingrediente: int(cantidad) for ingrediente, cantidad in row.items() if
+                                ingrediente.lower() != 'precio' and ingrediente.lower() != 'bebida'}
+        except FileNotFoundError:
+            print("Archivo CSV 'menu.csv' no encontrado.")
+        except Exception as e:
+            print(f"Error al leer el archivo CSV: {e}")
+
+        return {}
+
+    def obtener_cantidad_inventario(self, ingrediente):
+        # Obtiene la cantidad actual en inventario para un ingrediente específico
+        try:
+            with open('inventario.csv', newline='') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if row['Ingrediente'].lower() == ingrediente.lower():
+                        return int(row['Cantidad'])
+        except FileNotFoundError:
+            print("Archivo CSV 'inventario.csv' no encontrado.")
+        except Exception as e:
+            print(f"Error al leer el archivo CSV: {e}")
+
+        return 0
+
+    def actualizar_inventario(self):
+        # Actualiza el inventario después de una compra
+        for bebida, item in self.carrito.items():
+            cantidad = item['cantidad']
+            requisitos = self.obtener_requisitos(bebida)
+
+            # Resta la cantidad utilizada de cada ingrediente en el inventario
+            for ingrediente, cantidad_requerida in requisitos.items():
+                cantidad_actual = self.obtener_cantidad_inventario(ingrediente)
+                nueva_cantidad = cantidad_actual - cantidad * cantidad_requerida
+                self.actualizar_cantidad_inventario(ingrediente, nueva_cantidad)
+
+    def actualizar_cantidad_inventario(self, ingrediente, nueva_cantidad):
+        # Actualiza la cantidad en inventario para un ingrediente específico
+        try:
+            with open('inventario.csv', 'r', newline='') as file:
+                lines = file.readlines()
+
+            with open('inventario.csv', 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(['Ingrediente', 'Cantidad'])
+
+                for line in lines[1:]:  # Omitir la primera línea (encabezado)
+                    row = line.strip().split(',')
+                    if row[0].lower() == ingrediente.lower():
+                        writer.writerow([ingrediente, nueva_cantidad])
+                    else:
+                        writer.writerow(row)
+        except FileNotFoundError:
+            print("Archivo CSV 'inventario.csv' no encontrado.")
+        except Exception as e:
+            print(f"Error al escribir en el archivo CSV: {e}")
 
 class BeverageWidget(QWidget):
     def __init__(self, bebida, cantidad, precio_unitario, *args, **kwargs):

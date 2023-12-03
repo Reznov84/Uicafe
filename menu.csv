@@ -1,6 +1,7 @@
-Bebida,Precio
-Capuchino,60
-Expreso,45
-Frappe,85
-Chocolate,65
-moka,5.00
+Bebida,Precio,Agua,Leche,Cafe,Chocolate
+Capuchino,60,100,50,80,20
+Expreso,45,50,0,100,0
+Frappe,85,120,80,60,40
+Chocolate,65,80,100,0,120
+Moka,5,30,20,40,10
+Agua,20,600,0,0,0
