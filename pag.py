@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QTextEdit, QListWidget, QListWidgetItem, QPushButton
-from PyQt6.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QTextEdit, QListWidget, QListWidgetItem, QPushButton
+from PyQt5.QtCore import Qt
 from interfaz import Ui_MainWindow
 import csv
 
@@ -17,7 +17,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.listWidget_carrito = self.findChild(QListWidget, "listWidget_carrito")
 
         # Precios de las bebidas
-        self.precios = {'capuchino': 2.50, 'expreso': 1.80, 'frappe': 3.00, 'chocolate': 2.00}
+        self.precios = {}
+
+        # Cargar el menú desde un archivo CSV
+        self.cargar_menu_desde_csv('menu.csv')
 
         # Oculta elementos al inicio
         self.listWidget_menu.setVisible(False)
@@ -72,6 +75,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # Conecta el botón "BuyButton" para agregar la compra al carrito y guardar en CSV
         self.BuyButton.clicked.connect(self.agregar_al_carrito)
+
+    def cargar_menu_desde_csv(self, archivo_csv):
+        try:
+            with open(archivo_csv, newline='') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    bebida = row['Bebida']
+                    precio = float(row['Precio'])
+                    self.precios[bebida.lower()] = precio
+                    item = QListWidgetItem(f"{bebida}: ${precio:.2f}")
+                    self.listWidget_menu.addItem(item)
+        except FileNotFoundError:
+            print(f"Archivo CSV '{archivo_csv}' no encontrado.")
+        except Exception as e:
+            print(f"Error al leer el archivo CSV: {e}")
 
     def iniciar_sesion(self):
         if self.user == self.txt_user.toPlainText() and self.password == self.txt_pass.toPlainText():
